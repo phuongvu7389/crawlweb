@@ -18,15 +18,14 @@ url ="http://www.inspiringquotes.us/author/1939-abraham-lincoln"
 
 def insertTag(tag):
     return
-class tags: 
-    tag_name=""
-    tag_link=""
 
 class quotes:
     quote_name= ""
     quote_link= ""
     author_name= ""
     author_link= ""
+    tag_name=""
+    tag_link=""
     
 #function get quotes content from author link
 def crawlQuotesContent(url):
