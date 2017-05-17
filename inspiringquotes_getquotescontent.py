@@ -19,9 +19,9 @@ class tags:
     
 class Quotes:
     quote_name= ""
-    quote_link= ""
+    #quote_link= ""
     author_name= ""
-    author_link= ""
+    #author_link= ""
     tag_name=[]
     def __init__(self):
         self.tag_name=[]
@@ -36,9 +36,9 @@ class CrawledLink:
         
 # function get list_link_author from DB
 def getCrawledLinkQuotesFromDB():
-    sql = ("select id, link FROM list_link_author where status ='temp' limit 2")
+    sql = ("select id, link FROM list_link_author where status ='temp' limit 1")
     cursor.execute(sql)
-    #print("SQLSQLSQLSQLSQLSQL", sql)
+    #print("SQL QUERY", sql)
     data = cursor.fetchall()
     arrLink = []
     for item in data:
@@ -46,39 +46,69 @@ def getCrawledLinkQuotesFromDB():
         #print ('>>>>>>>>>>>>TOTAL LINKS: ',len(arrLink))
     return arrLink
    
-   
+def replaceTag(chuoi):
+    chuoi = chuoi.replace("#","")
+    return chuoi
+def sqlValue(chuoi):
+    chuoi = chuoi.replace("'","''")
+    return chuoi
+    
 ##url = "http://www.inspiringquotes.us/author/1939-abraham-lincoln"
 
-#function save data to DB
-def saveQuotesToDB(quo):
-    sql="INSERT INTO quotes(quote,author,tag_name) \
-    VALUES('%s', '%s', '%s');" % (quo.quote_name,quo.author_name,quo.tag_name.join(','))
-    print("save data><>>>>>>>>>>",sql)
+#function save quotes to DB
+def saveQuoteToDB(quo):
+    sql ="INSERT INTO quotes(quote,author,tag_name) \
+        VALUES('%s','%s','%s')\
+        ON DUPLICATE KEY UPDATE quote=(sqlValue(quo.quote_name);" % (sqlValue(quo.quote_name),quo.author_name,replaceTag(', '.join(quo.tag_name)))
+    print("SQL  QUERY saveQuoteToDB_____________________>", sql)
     try:
         cursor.execute(sql)
         db.commit()
         return True
     except:
-        db.rollback()       
+        db.rollback()
+       # db.close()
     return False
 
-#function save tag_name to DB
-def saveTags(quo):
-    sql = "INSERT INTO tags(tag_name) \
-    VALUES('%s','%s');" %(quo.tag_name)    
-    try:
-        cursor.execute(sql)
-        db.commit()
-    except:
-        db.rollback()
-        
 
+#save Tags to DB
+##def SaveTagsToDB(tag):
+##    sql = "INSERT INTO tags(tag_name) \
+##    VALUES('%s')ON DUPLICATE KEY UPDATE tag_name=quo.tag_name;" %(tag, "temp" )
+##    print("SQL  QUERY SaveTagsToDB_____________________>", sql)
+##    try:
+##        cursor.execute(sql)
+##        db.commit()
+##    except:
+##        db.rollback()
+
+#config save tag_name
+def config(code, value):
+    code.tags = value.quo.tag_name
+    for x in code.tags:
+        if any(x in code.tags):
+             sql = "INSERT INTO tags(tag_name) \
+             VALUES('%s');" %(quo.tag_name)
+             print("SQL  QUERY SaveTagsToDB_____________________>", sql)
+            
+#set done after get quote link
+def setDoneAuthorLinks(crawledLinks):
+    crawledLinkIds=[]
+    for cLink in crawledLinks:
+            crawledLinkIds.append('\''+str(cLink.id)+'\'')
+    sql = "UPDATE list_link_author SET status = 'done' WHERE id IN ("+ ','.join(crawledLinkIds) + ")"
+    print ('SQL:',sql)
+    cursor.execute(sql)
+    db.commit()
+
+
+      
 # function get quotes content from author link
 def crawlQuotesContent(clink):
     url = clink.link
     content =  requests.get(url).text
     soup = BeautifulSoup(content, "html.parser")
-##    quo = Quotes()
+    
     try:
         for li in soup.find('div' , {'class':'quotes-list'}).findAll('li'):
             quo = Quotes()
@@ -89,13 +119,13 @@ def crawlQuotesContent(clink):
                 quote_links = li.findAll('a')
                 #print("quote_links_______>>>>",quote_links)
                 if(len(quote_links)>0):
-                    quo.quote_text = quote_links[0].string.strip()
-                    #print("quotequote_text_______>>>>", quo.quote_text)
-                    quo.quote_link = quote_links[0].get('href')
+                    quo.quote_name = quote_links[0].string.strip()
+                    print("quote_name_____________________>", quo.quote_name)
+                    #quo.quote_link = quote_links[0].get('href')
                     #print("quote_text________>>>>:", quo.quote_link)
                 if(len(quote_links)>1):
                     quo.author_name = quote_links[1].string.strip()
-                    #print("quote author namequote_links_______>>>>:",quo.author_name)
+                    print("author_name_____________________>",quo.author_name)
                     # author_link = quote_links[1].get('href')
 
             quote_tags = li.find('p',{'class':'quote-tags'})
@@ -107,18 +137,20 @@ def crawlQuotesContent(clink):
                 for tag_link in quote_tags_links:
                    #print('tag_______>>>>:',tag_link.string.strip())
                     quo.tag_name.append(tag_link.string.strip())
-            #print('tags_______>>>>: ', quo.tag_name)
-
-##        s = json.dumps(quo.__dict__)    
-##        print('______________________________', s)    
-        if(saveQuotesToDB(quo)):
-            print("savequoteOK")
-            saveTags(quo.tag_name)
+            print('quote_tag_____________________>', quo.tag_name)
+            if(saveQuoteToDB(quo)):
+                print("da ve vao DB, okay!")
+                SaveTagsToDB(quo.tag_name)
+        #s = json.dumps(quo.__dict__)   #convert object to json 
+        print('______________________________')    
+        
+     
     except:
         print("error")
 
-
-all_link = getCrawledLinkQuotesFromDB()
-for clink in all_link:
-    crawlQuotesContent(clink)
-
+for x in range(1, 1):
+    print ('------------------------ LAN CHAY THU ',x)
+    all_link = getCrawledLinkQuotesFromDB()
+    for clink in all_link:
+        crawlQuotesContent(clink)
+    setDoneAuthorLinks(all_link)
