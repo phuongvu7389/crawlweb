@@ -13,15 +13,12 @@ cursor.execute("select version()")
 data = cursor.fetchone()
 print("connect db success: %s" % data)
 
-class tags:
-    tag_name=[]
-    tag_id=[]
     
 class Quotes:
     quote_name= ""
-    #quote_link= ""
+    quote_link= ""
     author_name= ""
-    #author_link= ""
+    author_link= ""
     tag_name=[]
     def __init__(self):
         self.tag_name=[]
@@ -36,7 +33,7 @@ class CrawledLink:
         
 # function get list_link_author from DB
 def getCrawledLinkQuotesFromDB():
-    sql = ("select id, link FROM list_link_author where status ='temp' limit 1")
+    sql = ("select id, link FROM list_link_author where status ='temp' limit 10")
     cursor.execute(sql)
     #print("SQL QUERY", sql)
     data = cursor.fetchall()
@@ -45,6 +42,7 @@ def getCrawledLinkQuotesFromDB():
         arrLink.append(CrawledLink(item[0], item[1]))
         #print ('>>>>>>>>>>>>TOTAL LINKS: ',len(arrLink))
     return arrLink
+
    
 def replaceTag(chuoi):
     chuoi = chuoi.replace("#","")
@@ -57,9 +55,11 @@ def sqlValue(chuoi):
 
 #function save quotes to DB
 def saveQuoteToDB(quo):
-    sql ="INSERT INTO quotes(quote,author,tag_name) \
-        VALUES('%s','%s','%s')\
-        ON DUPLICATE KEY UPDATE quote=(sqlValue(quo.quote_name);" % (sqlValue(quo.quote_name),quo.author_name,replaceTag(', '.join(quo.tag_name)))
+##    sql ="INSERT INTO quotes(quote,author,tag_name) \
+##        VALUES('%s','%s','%s')\
+##        ON DUPLICATE KEY UPDATE quote=(sqlValue(quo.quote_name);" % (sqlValue(quo.quote_name),quo.author_name,replaceTag(', '.join(quo.tag_name)))
+    sql ="INSERT INTO quotes(quote,quote_link,author,author_link,tag_name) \
+        VALUES('%s','%s','%s','%s','%s');" % (sqlValue(quo.quote_name),quo.quote_link,quo.author_name,quo.author_link,replaceTag(', '.join(quo.tag_name)))
     print("SQL  QUERY saveQuoteToDB_____________________>", sql)
     try:
         cursor.execute(sql)
@@ -83,13 +83,11 @@ def saveQuoteToDB(quo):
 ##        db.rollback()
 
 #config save tag_name
-def config(code, value):
-    code.tags = value.quo.tag_name
-    for x in code.tags:
-        if any(x in code.tags):
-             sql = "INSERT INTO tags(tag_name) \
-             VALUES('%s');" %(quo.tag_name)
-             print("SQL  QUERY SaveTagsToDB_____________________>", sql)
+##def saveToCconfigs(code, value):
+##    code.tags = value.quo.tag_name
+##    for x in code.tags:
+##        if any(x in code.tags):
+##             
             
 #set done after get quote link
 def setDoneAuthorLinks(crawledLinks):
@@ -121,12 +119,12 @@ def crawlQuotesContent(clink):
                 if(len(quote_links)>0):
                     quo.quote_name = quote_links[0].string.strip()
                     print("quote_name_____________________>", quo.quote_name)
-                    #quo.quote_link = quote_links[0].get('href')
-                    #print("quote_text________>>>>:", quo.quote_link)
+                    quo.quote_link = quote_links[0].get('href')
+                    print("quote_text________>>>>:", quo.quote_link)
                 if(len(quote_links)>1):
                     quo.author_name = quote_links[1].string.strip()
                     print("author_name_____________________>",quo.author_name)
-                    # author_link = quote_links[1].get('href')
+                    quo.author_link = quote_links[1].get('href')
 
             quote_tags = li.find('p',{'class':'quote-tags'})
             #print('TAGGGGGGGGGGGGGGGGGGG', quote_tags)
@@ -139,8 +137,8 @@ def crawlQuotesContent(clink):
                     quo.tag_name.append(tag_link.string.strip())
             print('quote_tag_____________________>', quo.tag_name)
             if(saveQuoteToDB(quo)):
-                print("da ve vao DB, okay!")
-                SaveTagsToDB(quo.tag_name)
+                print("da save vao DB, okay!")
+##                SaveTagsToDB(quo.tag_name)
         #s = json.dumps(quo.__dict__)   #convert object to json 
         print('______________________________')    
         
@@ -148,7 +146,7 @@ def crawlQuotesContent(clink):
     except:
         print("error")
 
-for x in range(1, 1):
+for x in range(1, 100000):
     print ('------------------------ LAN CHAY THU ',x)
     all_link = getCrawledLinkQuotesFromDB()
     for clink in all_link:
