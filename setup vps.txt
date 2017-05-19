@@ -1,0 +1,41 @@
+sau khi cài xong google vps linux
+
+mở ssh lên:
+
+gõ lệnh đổi pass user root: sudo passwd root
+
+nhap 2 lan password moi
+
+Tiep theo cau hinh lai ssh_config
+
+go lenh: sudo yum install nano -y
+
+Sau khi cai dat xong go tiep lenh: sudo nano /etc/ssh/sshd_config
+
+Tim den PasswordAuthentication va PermitRootLogin thay doi no thanh yes
+
+Sau do bam ctrl + O xong enter roi ctrl + x de thoat
+
+Va khoi dong lai ssh, go lenh: sudo service sshd restart
+
+Neu co loi thi go lenh: sudo reboot
+
+-----------------
+Cai dat centminmod:  https://centminmod.com/install.html ,https://thachpham.com/linux-webserver/cai-dat-centminmod.html
+
+Truoc tien cai dat 2 cái module wget và unzip
+go lenh: yum install wget unzip zip -y
+
+Cai dat centminmod go lenh: yum -y update; curl -O https://centminmod.com/installer.sh && chmod 0700 installer.sh && bash installer.sh
+
+config firewall google cloud https://console.cloud.google.com/networking/firewalls
+
+cấu hình tương tự default-allow-ssh nhưng đổi port thành: tcp:3306
+
+-------------------------------
+lệnh uzip file: unzip tenfile.zip
+
+vào panel điều khiển gõ: centmin
+service iptables stop
+restart php thì gõ: fpmrestart
+tắt firewall của vps: service nginx restart
